@@ -1,16 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ChatApp.Models.Account
+namespace ChatApp.Models
 {
     public class LoginViewModel
     {
-        [Required]
-        [Display(Name = "Username")]
-        public string Username { get; set; }
+        [Required(ErrorMessage = "البريد الإلكتروني مطلوب")]
+        [EmailAddress]
+        public string Email { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "كلمة المرور مطلوبة")]
         [DataType(DataType.Password)]
-        [Display(Name = "Password")]
         public string Password { get; set; }
     }
 }

@@ -1,6 +1,7 @@
-public interface IChatClient
+namespace ChatApp.SignalRHub
 {
-    Task NewUserJoined(string userName);
-    Task ReceiveMessage(string fromUser, string message);
-    Task GetConnectedUsers(List<string> users);
+    public interface IChatClient
+    {
+        Task ReceiveMessage(string user, string message);
+    }
 }

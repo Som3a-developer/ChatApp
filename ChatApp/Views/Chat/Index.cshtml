@@ -1,39 +1,38 @@
-﻿@model IEnumerable<ChatApp.Models.MessageModel>
-@{
-    ViewData["Title"] = "Chat Room";
+﻿@{
+    ViewData["Title"] = "الدردشة";
 }
 
-<div id="chatBox">
-    @foreach (var message in Model)
-    {
-        <div class="message">
-            <strong>@message.Sender.DisplayName:</strong>
-            <span>@message.Content</span>
-            <small>@message.Timestamp.ToString("hh:mm tt")</small>
-        </div>
-    }
+<h2>الدردشة</h2>
+
+<div>
+    <input type="text" id="messageInput" class="form-control" placeholder="اكتب رسالتك..." />
+    <button onclick="sendMessage()" class="btn btn-primary">إرسال</button>
 </div>
+<div id="messagesList"></div>
 
-<form id="messageForm">
-    <input type="text" id="messageInput" />
-    <button type="submit">Send</button>
-</form>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
 
-<script>
-    document.getElementById("messageForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const message = document.getElementById("messageInput").value;
-        connection.invoke("SendMessage", "@User.Identity.Name", 1, message);
-        document.getElementById("messageInput").value = "";
-    });
+        connection.on("ReceiveMessage", (user, message) => {
+            const msg = document.createElement("div");
+            msg.textContent = `${user}: ${message}`;
+            document.getElementById("messagesList").appendChild(msg);
+        });
 
-    connection.on("ReceiveMessage", function (message) {
-        const chatBox = document.getElementById("chatBox");
-        const msgElement = document.createElement("div");
-        msgElement.className = "message";
-        msgElement.innerHTML = `<strong>${message.sender.displayName}:</strong>
-                               <span>${message.content}</span>
-                               <small>${new Date(message.timestamp).toLocaleTimeString()}</small>`;
-        chatBox.appendChild(msgElement);
-    });
-</script>
+        connection.start().then(() => {
+            connection.invoke("JoinRoom", "defaultRoom");
+        }).catch(err => console.error(err));
+
+        function sendMessage() {
+            const message = document.getElementById("messageInput").value;
+            if (message) {
+                connection.invoke("SendMessage", "defaultRoom", message).catch(err => console.error(err));
+                document.getElementById("messageInput").value = "";
+            }
+        }
+    </script>
+}

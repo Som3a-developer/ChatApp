@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ChatApp.Models;
 
 namespace ChatApp.Controllers
 {
@@ -9,11 +8,7 @@ namespace ChatApp.Controllers
     {
         public IActionResult Index()
         {
-            var model = new ChatRoom
-            {
-                Name = User.Identity.Name
-            };
-            return View(model);
+            return View();
         }
     }
 }

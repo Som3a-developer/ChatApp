@@ -1,37 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using ChatApp.Models;
-using ChatApp.Data;
+using System.Threading.Tasks;
 
 namespace ChatApp.SignalRHub
 {
+    [Authorize]
     public class ChatHub : Hub<IChatClient>
     {
-        private readonly ApplicationDbContext _context;
-
-        public ChatHub(ApplicationDbContext context)
+        public async Task JoinRoom(string roomId)
         {
-            _context = context;
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+            await Clients.Group(roomId).ReceiveMessage("System", $"User {Context.User.Identity.Name} joined the room.");
         }
 
-        public async Task SendMessage(string userId, int roomId, string content)
+        public async Task SendMessage(string roomId, string message)
         {
-            var message = new MessageModel
-            {
-                SenderId = userId,
-                ChatRoomId = roomId,
-                Content = content,
-                Timestamp = DateTime.Now
-            };
-
-            _context.Messages.Add(message);
-            await _context.SaveChangesAsync();
-
-            await Clients.Group(roomId.ToString()).ReceiveMessage(message);
+            await Clients.Group(roomId).ReceiveMessage(Context.User.Identity.Name, message);
         }
 
-        public async Task JoinRoom(int roomId)
+        public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+            // Ì„ﬂ‰ ≈÷«›… „‰ÿﬁ ·≈“«·… «·„” Œœ„ „‰ «·„Ã„Ê⁄« 
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }

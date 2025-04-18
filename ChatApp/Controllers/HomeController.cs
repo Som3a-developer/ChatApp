@@ -1,19 +1,21 @@
-﻿// Controllers/HomeController.cs
-using System.Diagnostics;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ChatApp.Models;
 
-public class HomeController : Controller
+namespace ChatApp.Controllers
 {
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    public class HomeController : Controller
     {
-        var errorViewModel = new ErrorViewModel
+        public IActionResult Index()
         {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-        };
-
-        return View(errorViewModel);
+            return RedirectToAction("Login", "Account");
+        }
+        public IActionResult Register()
+        {
+            return View();
+        }
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+        }
     }
 }
