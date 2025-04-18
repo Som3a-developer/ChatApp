@@ -1,0 +1,39 @@
+﻿@model IEnumerable<ChatApp.Models.MessageModel>
+@{
+    ViewData["Title"] = "Chat Room";
+}
+
+<div id="chatBox">
+    @foreach (var message in Model)
+    {
+        <div class="message">
+            <strong>@message.Sender.DisplayName:</strong>
+            <span>@message.Content</span>
+            <small>@message.Timestamp.ToString("hh:mm tt")</small>
+        </div>
+    }
+</div>
+
+<form id="messageForm">
+    <input type="text" id="messageInput" />
+    <button type="submit">Send</button>
+</form>
+
+<script>
+    document.getElementById("messageForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const message = document.getElementById("messageInput").value;
+        connection.invoke("SendMessage", "@User.Identity.Name", 1, message);
+        document.getElementById("messageInput").value = "";
+    });
+
+    connection.on("ReceiveMessage", function (message) {
+        const chatBox = document.getElementById("chatBox");
+        const msgElement = document.createElement("div");
+        msgElement.className = "message";
+        msgElement.innerHTML = `<strong>${message.sender.displayName}:</strong>
+                               <span>${message.content}</span>
+                               <small>${new Date(message.timestamp).toLocaleTimeString()}</small>`;
+        chatBox.appendChild(msgElement);
+    });
+</script>
