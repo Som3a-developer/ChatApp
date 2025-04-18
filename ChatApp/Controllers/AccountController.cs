@@ -41,7 +41,12 @@ namespace ChatApp.Controllers
             return View(model);
         }
 
-        
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -1,0 +1,46 @@
+﻿@model ChatApp.Models.PrivateChatViewModel
+
+<h2>دردشة مع @Model.ReceiverDisplayName</h2>
+
+<div id="chatBox" style="height: 400px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
+    @foreach (var message in Model.Messages)
+    {
+        <div>
+            <strong>@(message.SenderId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ? "أنت" : Model.ReceiverDisplayName):</strong>
+            @message.Content <small>(@message.SentAt.ToLocalTime())</small>
+        </div>
+    }
+</div>
+
+<div class="form-group">
+    <input type="text" id="messageInput" class="form-control" placeholder="اكتب رسالتك..." />
+    <button id="sendButton" class="btn btn-primary mt-2">إرسال</button>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        connection.on("ReceiveMessage", (senderName, message, sentAt) => {
+            const chatBox = document.getElementById("chatBox");
+            const messageElement = document.createElement("div");
+            messageElement.innerHTML = `<strong>${senderName}:</strong> ${message} <small>(${new Date(sentAt).toLocaleString()})</small>`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        connection.start().catch(err => console.error(err));
+
+        document.getElementById("sendButton").addEventListener("click", () => {
+            const message = document.getElementById("messageInput").value;
+            if (message) {
+                connection.invoke("SendPrivateMessage", "@Model.ReceiverId", message)
+                    .catch(err => console.error(err));
+                document.getElementById("messageInput").value = "";
+            }
+        });
+    </script>
+}
