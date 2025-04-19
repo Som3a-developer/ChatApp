@@ -12,22 +12,20 @@ namespace ChatApp.Models
         [Required]
         public string SenderId { get; set; }
 
-        public string ReceiverId { get; set; } // Nullable for group messages
-
-        public int? ChatRoomId { get; set; } // Nullable for private messages
+        [Required]
+        public string ReceiverId { get; set; }
 
         [Required]
         public string Content { get; set; }
 
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime SentAt { get; set; }
+
+        public int? ChatRoomId { get; set; } // Nullable if not used
 
         [ForeignKey("SenderId")]
         public ApplicationUser Sender { get; set; }
 
         [ForeignKey("ReceiverId")]
         public ApplicationUser Receiver { get; set; }
-
-        [ForeignKey("ChatRoomId")]
-        public ChatRoom ChatRoom { get; set; }
     }
 }

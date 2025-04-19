@@ -34,7 +34,7 @@ namespace ChatApp.Controllers
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                return RedirectToAction("Index", "Chat");
+                return RedirectToAction("Index", "Home");
             }
 
             ModelState.AddModelError(string.Empty, "تسجيل الدخول غير صحيح.");
@@ -56,7 +56,7 @@ namespace ChatApp.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("Index", "Home");
         }
         [HttpPost]
         [AllowAnonymous]

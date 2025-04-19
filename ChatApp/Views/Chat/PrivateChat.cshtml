@@ -1,45 +1,76 @@
 ﻿@model ChatApp.Models.PrivateChatViewModel
+@using System.Security.Claims
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
 <h2>دردشة مع @Model.ReceiverDisplayName</h2>
 
-<div id="chatBox" style="height: 400px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
+<a asp-controller="Home" asp-action="Index" class="btn btn-secondary mb-3">العودة إلى الشاتات</a>
+
+<div id="chatMessages" style="height: 400px; overflow-y: auto; padding: 15px; background-color: #f5f6f5;">
     @foreach (var message in Model.Messages)
     {
-        <div>
-            <strong>@(message.SenderId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ? "أنت" : Model.ReceiverDisplayName):</strong>
-            @message.Content <small>(@message.SentAt.ToLocalTime())</small>
+        var isCurrentUser = message.SenderId == User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        <div style="margin-bottom: 12px; display: flex; @(isCurrentUser ? "justify-content: end;" : "justify-content: start;")">
+            <div style="max-width: 65%; padding: 10px 15px; border-radius: 18px; background-color: @(isCurrentUser ? "#0084ff; color: white;" : "#e4e6eb; color: black;"); box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                <strong style="font-size: 0.9em;">@(message.Sender?.DisplayName ?? "غير معروف")</strong>
+                <p style="margin: 2px 0 4px;">@message.Content</p>
+                <small style="font-size: 0.75em; opacity: 0.7; display: block; text-align: @(isCurrentUser ? "right" : "left");">@message.SentAt.ToString("g")</small>
+            </div>
         </div>
     }
 </div>
 
-<div class="form-group">
-    <input type="text" id="messageInput" class="form-control" placeholder="اكتب رسالتك..." />
-    <button id="sendButton" class="btn btn-primary mt-2">إرسال</button>
+<div class="input-group mb-3" style="padding: 10px; background-color: #fff; border-top: 1px solid #ddd;">
+    <input type="text" id="messageInput" class="form-control" placeholder="اكتب رسالتك..." style="border-radius: 20px;" />
+    <button id="sendButton" class="btn btn-primary" style="border-radius: 20px; margin-left: 10px;">إرسال</button>
 </div>
 
 @section Scripts {
-    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
+        console.log("Starting SignalR script...");
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .build();
 
-        connection.on("ReceiveMessage", (senderName, message, sentAt) => {
-            const chatBox = document.getElementById("chatBox");
-            const messageElement = document.createElement("div");
-            messageElement.innerHTML = `<strong>${senderName}:</strong> ${message} <small>(${new Date(sentAt).toLocaleString()})</small>`;
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        connection.on("ReceiveMessage", (senderId, message, sentAt, displayName) => {
+            console.log("Received message:", senderId, message, sentAt, displayName);
+            const isCurrentUser = "@User.FindFirst(ClaimTypes.NameIdentifier)?.Value" === senderId;
+            const msg = `
+                <div style="margin-bottom: 12px; display: flex; ${isCurrentUser ? "justify-content: end;" : "justify-content: start;"}">
+                    <div style="max-width: 65%; padding: 10px 15px; border-radius: 18px; background-color: ${isCurrentUser ? "#0084ff; color: white;" : "#e4e6eb; color: black;"}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                        <strong style="font-size: 0.9em;">${displayName || "غير معروف"}</strong>
+                        <p style="margin: 2px 0 4px;">${message}</p>
+                        <small style="font-size: 0.75em; opacity: 0.7; display: block; text-align: ${isCurrentUser ? "right" : "left"};">${new Date(sentAt).toLocaleString()}</small>
+                    </div>
+                </div>`;
+            document.getElementById("chatMessages").innerHTML += msg;
+            document.getElementById("chatMessages").scrollTop = document.getElementById("chatMessages").scrollHeight;
         });
 
-        connection.start().catch(err => console.error(err));
+        connection.start()
+            .then(() => console.log("SignalR connection started successfully"))
+            .catch(err => console.error("SignalR connection failed:", err.toString()));
 
         document.getElementById("sendButton").addEventListener("click", () => {
             const message = document.getElementById("messageInput").value;
+            console.log("Send button clicked, message:", message);
             if (message) {
                 connection.invoke("SendPrivateMessage", "@Model.ReceiverId", message)
-                    .catch(err => console.error(err));
+                    .then(() => console.log("Message sent successfully"))
+                    .catch(err => console.error("SendPrivateMessage failed:", err.toString()));
                 document.getElementById("messageInput").value = "";
+            } else {
+                console.log("No message entered");
+            }
+        });
+
+        document.getElementById("messageInput").addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+                document.getElementById("sendButton").click();
             }
         });
     </script>

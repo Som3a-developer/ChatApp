@@ -1,6 +1,6 @@
 ﻿@if (User.Identity.IsAuthenticated)
 {
-    <form asp-controller="Account" asp-action="Logout" method="post" class="form-inline">
+    <form asp-controller="Home" asp-action="Login" method="post" class="form-inline">
         <button type="submit" class="btn btn-link">تسجيل الخروج</button>
     </form>
 }
